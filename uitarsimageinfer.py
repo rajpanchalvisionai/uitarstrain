@@ -1,5 +1,5 @@
 import torch
-# Import the specific model class
+# use transformers 4.49.0
 from transformers import AutoTokenizer, Qwen2VLForConditionalGeneration, AutoProcessor
 from PIL import Image
 import requests
@@ -24,21 +24,19 @@ try:
 except Exception as e:
     print(f"Error loading model or processor: {e}")
     print("-" * 50)
-    print("TROUBLESHOOTING STEPS:")
+    print("TROUBLESHOOTING LOADING:")
     print("This error indicates an incompatibility between the model's configuration files")
     print("on Hugging Face Hub and your transformers library version.")
-    print("Try installing a different version of the transformers library and clearing the cache.")
-    print("Based on config.json, versions around 4.41.2 might be relevant, but 4.51.3 had the size error.")
-    print("A version between 4.41.2 and 4.51.3 is most likely needed.")
-    print("Ensure you clear the Hugging Face cache after installing a new version.")
+    print("We previously narrowed this down. If this error persists, double-check transformers version (should be 4.48.0) and cache.")
     print("-" * 50)
     exit()
 
 
 # Load an image from a URL or local path
 # Example using a placeholder URL, replace with your image path or URL
-image_url = "https://www.gstatic.com/webp/gallery2/4.jpg" # Replace with your image URL or local path
-# image_path = "/path/to/your/image.jpg" # Uncomment and use this for a local file
+# image_url = "https://www.gstatic.com/webp/gallery2/1.jpg" # Replace with your image URL or local path
+image_url = "" # Replace with your image URL or local path
+image_path = "/home/administrator/flash/UI-tars/vncscreen.png" # Uncomment and use this for a local file
 
 try:
     print(f"Loading image from: {image_url}")
@@ -47,8 +45,8 @@ try:
         response = requests.get(image_url)
         response.raise_for_status()
         image = Image.open(BytesIO(response.content)).convert("RGB")
-    # elif os.path.exists(image_path): # Uncomment and use this for local path
-    #     image = Image.open(image_path).convert("RGB")
+    elif os.path.exists(image_path): # Uncomment and use this for local path
+        image = Image.open(image_path).convert("RGB")
     else:
          print(f"Error: Image path/URL seems invalid: {image_url}")
          exit()
@@ -71,7 +69,9 @@ conversation = [
             },
             {
                 "type": "text",
-                "text": "Describe this image and answer the question: What is in this picture?"
+                # Simplified prompt
+                "text": "Describe this image."
+                # Or try: "What is in this picture?"
             }
         ]
     }
@@ -102,9 +102,10 @@ with torch.no_grad():
     output_ids = model.generate(
         **inputs,
         max_new_tokens=100,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9,
+        # Adjust generation parameters
+        do_sample=False, # Disable sampling for less randomness
+        # temperature=0.1, # Low temperature
+        # top_p=0.7,       # Lower top_p
         pad_token_id=processor.tokenizer.eos_token_id
     )
 print("Response generated.")
